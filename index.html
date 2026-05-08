@@ -334,6 +334,123 @@
       width: 22px;
       height: 22px;
     }
+
+    body.mode-v3 {
+      padding: 8px;
+    }
+
+    body.mode-v3 .wrap {
+      border-radius: 14px;
+      max-width: 860px;
+    }
+
+    body.mode-v3 header {
+      padding: 12px;
+    }
+
+    body.mode-v3 h1 {
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    body.mode-v3 .meta {
+      gap: 6px;
+    }
+
+    body.mode-v3 .stat {
+      font-size: 0.76rem;
+      padding: 4px 8px;
+    }
+
+    body.mode-v3 .controls {
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    body.mode-v3 input[type="search"] {
+      width: 100%;
+      font-size: 0.88rem;
+      padding: 9px 11px;
+      border-radius: 10px;
+    }
+
+    body.mode-v3 button {
+      font-size: 0.74rem;
+      padding: 7px 9px;
+    }
+
+    body.mode-v3 .table-wrap {
+      display: none;
+    }
+
+    body.mode-v3 .mobile-list {
+      display: block;
+      padding: 8px;
+    }
+
+    body.mode-v3 .mobile-time,
+    body.mode-v3 .mobile-break {
+      margin: 8px 0 5px;
+      border-radius: 9px;
+      padding: 7px 9px;
+      font-size: 0.75rem;
+    }
+
+    body.mode-v3 .mobile-card {
+      border-radius: 10px;
+      margin: 6px 0;
+      padding: 9px;
+      box-shadow: none;
+    }
+
+    body.mode-v3 .mobile-num {
+      font-size: 0.7rem;
+      margin-bottom: 4px;
+      padding: 2px 7px;
+    }
+
+    body.mode-v3 .mobile-name {
+      font-size: 0.86rem;
+      line-height: 1.2;
+    }
+
+    body.mode-v3 .mobile-grid {
+      display: none;
+    }
+
+    body.mode-v3 .mobile-top {
+      align-items: center;
+      gap: 8px;
+    }
+
+    body.mode-v3 .mobile-check {
+      font-size: 0.74rem;
+      gap: 5px;
+    }
+
+    body.mode-v3 input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+
+    body.mode-v3 .mobile-card-compact {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    body.mode-v3 .compact-main {
+      min-width: 0;
+      flex: 1;
+    }
+
+    body.mode-v3 .compact-prev {
+      font-size: 0.75rem;
+      color: #274675;
+      font-weight: 700;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -377,8 +494,11 @@
 
   <script>
     const STORAGE_KEY = "futrono-campeonato-check-v1";
-    const isV2Mode = new URLSearchParams(window.location.search).get("mode") === "v2";
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    const isV2Mode = mode === "v2";
+    const isV3Mode = mode === "v3";
     if (isV2Mode) document.body.classList.add("mode-v2");
+    if (isV3Mode) document.body.classList.add("mode-v3");
 
     function timeToMinutes(hhmm) {
       const [h, m] = hhmm.split(":").map(Number);
@@ -705,25 +825,42 @@
 
         const mobileCard = document.createElement("div");
         mobileCard.className = `mobile-card ${isDone ? "done" : "pending"}`;
-        mobileCard.innerHTML = `
-          <div class="mobile-top">
-            <div>
-              <span class="mobile-num">#${item.n}</span>
-              <div class="mobile-name">${item.nombre}</div>
+
+        if (isV3Mode) {
+          mobileCard.innerHTML = `
+            <div class="mobile-card-compact">
+              <div class="compact-main">
+                <span class="mobile-num">#${item.n}</span>
+                <div class="mobile-name">${item.nombre}</div>
+                <div class="compact-prev">Previsto ${item.horaPrevista || item.hora}</div>
+              </div>
+              <label class="mobile-check">
+                <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
+                Paso
+              </label>
             </div>
-            <label class="mobile-check">
-              <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
-              Paso
-            </label>
-          </div>
-          <div class="mobile-grid">
-            <div><strong>Club:</strong> ${item.club}</div>
-            <div><strong>Categoria:</strong> ${item.categoria}</div>
-            <div><strong>Implemento:</strong> ${item.implemento}</div>
-            <div><strong>Horario:</strong> ${item.hora}</div>
-            <div><strong>Previsto:</strong> ${item.horaPrevista || item.hora}</div>
-          </div>
-        `;
+          `;
+        } else {
+          mobileCard.innerHTML = `
+            <div class="mobile-top">
+              <div>
+                <span class="mobile-num">#${item.n}</span>
+                <div class="mobile-name">${item.nombre}</div>
+              </div>
+              <label class="mobile-check">
+                <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
+                Paso
+              </label>
+            </div>
+            <div class="mobile-grid">
+              <div><strong>Club:</strong> ${item.club}</div>
+              <div><strong>Categoria:</strong> ${item.categoria}</div>
+              <div><strong>Implemento:</strong> ${item.implemento}</div>
+              <div><strong>Horario:</strong> ${item.hora}</div>
+              <div><strong>Previsto:</strong> ${item.horaPrevista || item.hora}</div>
+            </div>
+          `;
+        }
 
         const checkMobile = mobileCard.querySelector("input");
         checkMobile.addEventListener("change", (e) => {
