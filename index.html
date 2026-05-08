@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campeonato Gimnasia Ritmica - Control de Paso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3f5f7;
+      --card: #ffffff;
+      --text: #101828;
+      --muted: #5f6b7f;
+      --line: #d5dce8;
+      --pending: #fff5de;
+      --done: #ddf5e6;
+      --done-border: #15803d;
+      --pending-border: #b7791f;
+      --accent: #0f4ba8;
+      --accent-weak: #dbeafe;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #d8e6ff 0%, transparent 50%),
+        radial-gradient(900px 500px at 90% -20%, #e8f7ed 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .wrap {
+      max-width: 1320px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid #cfd8e7;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(8, 31, 66, 0.09);
+    }
+
+    header {
+      padding: 28px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #f9fbff 0%, #f5f8ff 100%);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-family: "Sora", sans-serif;
+      font-size: clamp(1.3rem, 1.9vw, 2rem);
+      letter-spacing: -0.02em;
+    }
+
+    .meta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: #44506a;
+      font-size: 0.95rem;
+    }
+
+    .stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid #d8e1ef;
+      border-radius: 999px;
+      background: #ffffffcc;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="search"] {
+      width: 360px;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      outline: none;
+      background: #ffffff;
+    }
+
+    input[type="search"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(25, 88, 209, 0.15);
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1), border-color 180ms ease, background-color 180ms ease;
+    }
+
+    button:hover {
+      border-color: #9ab4e5;
+      transform: translateY(-1px);
+    }
+
+    button[data-active="true"] {
+      background: var(--accent-weak);
+      border-color: #92b3e7;
+      color: #0f356f;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      max-height: calc(100vh - 300px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1020px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 10px;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #eef3ff;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #41506f;
+    }
+
+    tr.pending {
+      background: var(--pending);
+      box-shadow: inset 4px 0 0 var(--pending-border);
+    }
+
+    tr.done {
+      background: var(--done);
+      box-shadow: inset 4px 0 0 var(--done-border);
+    }
+
+    tr:not(.time-row):not(.break-row) {
+      transition: background-color 220ms ease;
+    }
+
+    tr.time-row td {
+      background: #edf2ff;
+      color: #2f436f;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    tr.break-row td {
+      background: #faf7ee;
+      color: #78601d;
+      font-weight: 600;
+    }
+
+    .small { color: var(--muted); font-size: 0.82rem; margin-top: 10px; }
+    .pass-col { text-align: center; width: 70px; }
+
+    input[type="checkbox"] {
+      width: 19px;
+      height: 19px;
+      accent-color: #197246;
+      cursor: pointer;
+    }
+
+    @media (max-width: 700px) {
+      header { padding: 16px; }
+      h1 { font-size: 1.12rem; }
+      .meta { font-size: 0.85rem; }
+      body { padding: 10px; }
+      .stat { padding: 6px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>II Campeonato Club Gimnasia Ritmica Futrono</h1>
+      <div class="meta">
+        <span class="stat">Sabado 09 de Mayo</span>
+        <span class="stat" id="countTotal"></span>
+        <span class="stat" id="countDone"></span>
+        <span class="stat" id="countPending"></span>
+      </div>
+      <div class="controls">
+        <input id="search" type="search" placeholder="Buscar por nombre, club, categoria o implemento" />
+        <button id="showAll" data-active="true">Mostrar todo</button>
+        <button id="showPending" data-active="false">Solo faltan</button>
+        <button id="showDone" data-active="false">Solo pasaron</button>
+        <button id="clearAll">Limpiar marcas</button>
+      </div>
+      <div class="small">La persistencia se guarda automaticamente en este navegador (localStorage).</div>
+    </header>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Club</th>
+            <th>Categoria</th>
+            <th>Implemento</th>
+            <th>Horario</th>
+            <th class="pass-col">Paso</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "futrono-campeonato-check-v1";
+
+    const rows = [
+      { type: "time", label: "9:20" },
+      { n: 1, nombre: "Maite Rayen Jara Torres", club: "Elite Los Rios", categoria: "Junior Elite", implemento: "Aro", hora: "9:20" },
+      { n: 2, nombre: "Agustina Manriquez", club: "Alma Osorno", categoria: "Junior C", implemento: "Aro", hora: "9:20" },
+      { n: 3, nombre: "Valentina Vargas", club: "Ritmica Espanola Valdivia", categoria: "Junior C", implemento: "Aro", hora: "9:20" },
+      { n: 4, nombre: "Josefina Guzman Cardenas", club: "Elite Los Rios", categoria: "Junior C", implemento: "Aro", hora: "9:20" },
+      { n: 5, nombre: "Anais Lagos", club: "Ritmica Espanola Valdivia", categoria: "Junior C", implemento: "Aro", hora: "9:20" },
+      { n: 6, nombre: "Cristina Morales Barria", club: "Inti Los Lagos", categoria: "Junior C", implemento: "Aro", hora: "9:20" },
+      { n: 7, nombre: "Maria Jose Pena Sepulveda", club: "Cisnes Los Rios", categoria: "Senior C", implemento: "Aro", hora: "9:20" },
+      { n: 8, nombre: "Maria Jesus Vega", club: "Ritmica Espanola Valdivia", categoria: "Senior C", implemento: "Aro", hora: "9:20" },
+      { n: 9, nombre: "Maria Jose Yelor Mora", club: "Futrono", categoria: "Senior C", implemento: "Aro", hora: "9:20" },
+      { n: 10, nombre: "Martina Vargas", club: "Alma Osorno", categoria: "Senior C", implemento: "Aro", hora: "9:20" },
+      { n: 11, nombre: "Valentina Angulo", club: "UACH", categoria: "Senior C", implemento: "Aro", hora: "9:20" },
+      { n: 12, nombre: "Valentina Valenzuela", club: "Futrono", categoria: "Senior C", implemento: "Aro", hora: "9:20" },
+      { n: 13, nombre: "Ambar Alexa Gonzalez Silva", club: "GRD Fresia", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 14, nombre: "Emilia Del Rosario Munoz Rivas", club: "ARA", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 15, nombre: "Amanda Elisa Hernandez Rupayan", club: "GRD Fresia", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 16, nombre: "Isidora Luengo", club: "Ritmica Espanola Valdivia", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 17, nombre: "Rafaela Ines Silva Faure", club: "Elite Los Rios", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 18, nombre: "Emilia Sofia Cisterna Brana", club: "GRD Fresia", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 19, nombre: "Amanda Magdalena Morales Gomez", club: "Elite Los Rios", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 20, nombre: "Elena Carolina Schnettler Bohle", club: "GRD Fresia", categoria: "Infantil B", implemento: "Aro", hora: "9:20" },
+      { n: 21, nombre: "Maite Rayen Jara Torres", club: "Elite Los Rios", categoria: "Junior Elite", implemento: "Balon", hora: "9:20" },
+      { n: 22, nombre: "Antonia Velasquez", club: "Ritmica Espanola Valdivia", categoria: "Senior A", implemento: "Clavas", hora: "9:20" },
+      { n: 23, nombre: "Anais Aylen Mella Ortega", club: "GRD Fresia", categoria: "Pre Infantil A", implemento: "ML", hora: "9:20" },
+      { n: 24, nombre: "Isidora Belen Nercelles Castro", club: "Gimnastico Paillaco", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 25, nombre: "Agustina Sanchez Varela", club: "Elite Los Rios", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 26, nombre: "Amara Pendola", club: "Ritmica Espanola Valdivia", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 27, nombre: "Maite Rain", club: "Alma Osorno", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 28, nombre: "Emma Antonia Penafiel Lopez", club: "Gimnastico Paillaco", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 29, nombre: "Magdalena Yelor", club: "Futrono", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 30, nombre: "Juliana Leonor Vives Hidalgo", club: "Gimnastico Paillaco", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 31, nombre: "Julieta Ignacia Quezada Martinez", club: "ARA", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 32, nombre: "Isidora Perez Luna", club: "Elite Los Rios", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 33, nombre: "Anais Antonella Pineda Avila", club: "ARA", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 34, nombre: "Amelia San Martin Mellado", club: "Elite Los Rios", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 35, nombre: "Josefa Salgado", club: "Ritmica Espanola Valdivia", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 36, nombre: "Maria Silva", club: "ARA", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 37, nombre: "Mia Foitzick Ahumada", club: "Gimnastico Paillaco", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 38, nombre: "Luciana Miranda Vergara", club: "ARA", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 39, nombre: "Sofia Rodas Aguilera", club: "Elite Los Rios", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 40, nombre: "Adalys Pascale Pulido Rolack", club: "Huellas del Futuro", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 41, nombre: "Amanda Diaz", club: "ARA", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 42, nombre: "Martina Montecinos Andrade", club: "Inti Los Lagos", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 43, nombre: "Josefa de la Parra", club: "Ritmica Espanola Valdivia", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+      { n: 44, nombre: "Valentina Quezada", club: "Gimnastico Paillaco", categoria: "Pre Infantil C", implemento: "ML", hora: "9:20" },
+
+      { type: "break", label: "11:30 Break 15 minutos - Marcacion" },
+      { type: "time", label: "11:45" },
+      { n: 45, nombre: "Maite Rayen Jara Torres", club: "Elite Los Rios", categoria: "Junior Elite", implemento: "Clavas", hora: "11:45" },
+      { n: 46, nombre: "Pascale Suart Molina", club: "ARA", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 47, nombre: "Matilda Nett", club: "Institulo Aleman de Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 48, nombre: "Sofia Belen Nercelles Castro", club: "Gimnastico Paillaco", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 49, nombre: "Maithe Aguilar Rodriguez", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 50, nombre: "Josefa Admore Jaduri Cardenas", club: "Gimnastico Paillaco", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 51, nombre: "Valentina Rebolledo", club: "Alma Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 52, nombre: "Josefina Schafer Banados", club: "Gimnastico Paillaco", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 53, nombre: "Antonella Cardenas Borquez", club: "Colodep", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 54, nombre: "Florencia Jaramillo", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 55, nombre: "Pascal Arismendi Peralta", club: "Colodep", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 56, nombre: "Genesis Hernandez Martinez", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 57, nombre: "Laura Paz Hernandez Saez", club: "Huellas del Futuro", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 58, nombre: "Leonor Guiresse", club: "Institulo Aleman de Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 59, nombre: "Fernanda Navarrete Rademacher", club: "Huellas del Futuro", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 60, nombre: "Josefa Verdello", club: "Green House", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 61, nombre: "Sofia Antonella Gonzalez Perez", club: "Gimnastico Paillaco", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 62, nombre: "Maite Nunez Fernandez", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 63, nombre: "Florencia Villa", club: "Green House", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 64, nombre: "Renata Isidora Cobos Ili", club: "Gimnastico Paillaco", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 65, nombre: "Agustina Stolzenbach", club: "Institulo Aleman de Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 66, nombre: "Belen Medina Pizarro", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 67, nombre: "Isidora Jimenez", club: "Green House", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 68, nombre: "Isabella Lagos", club: "Ritmica Espanola Valdivia", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 69, nombre: "Javiera Von Conta", club: "Institulo Aleman de Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 70, nombre: "Emilia Antonia Tejo Montes", club: "Gimnastico Paillaco", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 71, nombre: "Agustina Mery Aucapan", club: "Colodep", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 72, nombre: "Fernanda Avila Carrasco", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 73, nombre: "Amanda Cardenas", club: "Institulo Aleman de Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 74, nombre: "Isidora Cespedez", club: "Green House", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 75, nombre: "Victoria Wilde Garrido", club: "Cisnes Los Rios", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 76, nombre: "Emilia Garcia", club: "Institulo Aleman de Osorno", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 77, nombre: "Maria Ignacia Collipal Herrera", club: "ARA", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 78, nombre: "Matilda Dumenes", club: "Inti Los Lagos", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 79, nombre: "Florencia Villa", club: "Green House", categoria: "Pre Infantil Formativo", implemento: "ML", hora: "11:45" },
+      { n: 80, nombre: "Maite Rayen Jara Torres", club: "Elite Los Rios", categoria: "Junior Elite", implemento: "Cinta", hora: "11:45" },
+      { n: 81, nombre: "Anais Aylen Mansilla Ortega", club: "GRD Fresia", categoria: "Pre Infantil A", implemento: "Cuerda", hora: "11:45" },
+      { n: 82, nombre: "Antonia Velasquez", club: "Ritmica Espanola Valdivia", categoria: "Senior A", implemento: "Balon", hora: "11:45" },
+      { n: 83, nombre: "Renata Candia Uribe", club: "ARA", categoria: "Junior B", implemento: "Balon", hora: "11:45" },
+      { n: 84, nombre: "Antonia Betancurt Vera", club: "Futrono", categoria: "Junior B", implemento: "Balon", hora: "11:45" },
+      { n: 85, nombre: "Amaly Agustina Perez Luna", club: "Elite Los Rios", categoria: "Junior B", implemento: "Balon", hora: "11:45" },
+
+      { type: "break", label: "13:30 Break almuerzo 1 hora - Marcacion jornada PM" },
+      { type: "time", label: "14:45" },
+      { n: 86, nombre: "Ayleen Hernandez Molina", club: "Futrono", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 87, nombre: "Agustina Juliet Saldias", club: "Inti Los Lagos", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 88, nombre: "Agustina Valenzuela", club: "Ritmica Espanola Valdivia", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 89, nombre: "Marianna Pena Sepulveda", club: "Cisnes Los Rios", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 90, nombre: "Mia Hoffmann", club: "Ritmica Espanola Valdivia", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 91, nombre: "Julieta Astroza", club: "Futrono", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 92, nombre: "Luciana Rain", club: "Alma Osorno", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 93, nombre: "Sofia Padilla", club: "Ritmica Espanola Valdivia", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 94, nombre: "Dominga Radwan", club: "ARA", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 95, nombre: "Amparo Arriagada", club: "Futrono", categoria: "Peque Formativo", implemento: "ML", hora: "14:45" },
+      { n: 96, nombre: "Alba Simone Vives Hidalgo", club: "Gimnastico Paillaco", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 97, nombre: "Maria Ignacia Garcia", club: "Instituto Aleman de Osorno", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 98, nombre: "Agustina Pia Schafer Banados", club: "Gimnastico Paillaco", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 99, nombre: "Agustina Ignacia Garrido Miranda", club: "Huellas del Futuro", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 100, nombre: "Florencia Oyarzo", club: "Ritmica Espanola Valdivia", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 101, nombre: "Pia Garces Pizarro", club: "Inti Los Lagos", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 102, nombre: "Arantza Yuliet Yumar Lobo", club: "Elite Los Rios", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 103, nombre: "Leonor Valentina Diaz Shaefer", club: "GRD Fresia", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 104, nombre: "Emilia Navarrete Tillemann", club: "Inti Los Lagos", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 105, nombre: "Paulina Fernandez Henriquez", club: "Huellas del Futuro", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 106, nombre: "Alondra Acevedo Gatica", club: "Futrono", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 107, nombre: "Gretta Gonzalez Pineda", club: "Gimnastico Paillaco", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 108, nombre: "Isidora Farina Cardenas", club: "Inti Los Lagos", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 109, nombre: "Ignacia Rafaela Barrientos Rubio", club: "GRD Fresia", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 110, nombre: "Antonella Giacomozzi", club: "Instituto Aleman de Osorno", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 111, nombre: "Isidora Medina Andrades", club: "Inti Los Lagos", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 112, nombre: "Victoria Soto Obando", club: "Futrono", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 113, nombre: "Carlota Gutierrez Camargo", club: "Elite Los Rios", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 114, nombre: "Emilia Carcamo Quezada", club: "Gimnastico Paillaco", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 116, nombre: "Colomba Javiera Thomas Leiva", club: "GRD Fresia", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 117, nombre: "Emma Luengo", club: "Ritmica Espanola Valdivia", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 118, nombre: "Amanda Aguilar", club: "Green House", categoria: "Mini Formativo", implemento: "ML", hora: "14:45" },
+      { n: 119, nombre: "Luciana Paz Guzman Vera", club: "GRD Fresia", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 120, nombre: "Florencia Isidora Pardo Marquez", club: "Huellas del Futuro", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 120, nombre: "Florencia Caliva", club: "Ritmica Espanola Valdivia", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 121, nombre: "Florencia Barria Vial", club: "Elite Los Rios", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 122, nombre: "Amanda Quijon Lara", club: "Futrono", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 123, nombre: "Catalina Kenner Ose", club: "Cisnes Los Rios", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 124, nombre: "Isabel Aravena Arismendi", club: "Futrono", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 125, nombre: "Mackenzie Yurisch Vasquez", club: "ARA", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 126, nombre: "Maite Rivera", club: "Ritmica Espanola Valdivia", categoria: "Mini C", implemento: "ML", hora: "14:45" },
+      { n: 127, nombre: "Maite Vargas", club: "Alma Osorno", categoria: "Peque C", implemento: "ML", hora: "14:45" },
+
+      { type: "break", label: "16:30 Break 10 minutos - Marcacion" },
+      { type: "time", label: "16:40" },
+      { n: 128, nombre: "Josefa Roa Barrientos", club: "ARA", categoria: "Mini B", implemento: "ML", hora: "16:40" },
+      { n: 129, nombre: "Domiga Pascal Toro Carrasco", club: "Elite Los Rios", categoria: "Mini B", implemento: "ML", hora: "16:40" },
+      { n: 130, nombre: "Mia Acosta Gonzalez", club: "Inti Los Lagos", categoria: "Mini B", implemento: "ML", hora: "16:40" },
+      { n: 131, nombre: "Agustina Alvarado Arriagada", club: "GRD Fresia", categoria: "Mini B", implemento: "ML", hora: "16:40" },
+      { n: 132, nombre: "Alonsa Ignacia Sandoval Salas", club: "Elite Los Rios", categoria: "Pre Infantil B", implemento: "ML", hora: "16:40" },
+      { n: 133, nombre: "Sofia Andrades", club: "Ritmica Espanola Valdivia", categoria: "Pre Infantil B", implemento: "ML", hora: "16:40" },
+      { n: 134, nombre: "Noemi Gonzalez Kahler", club: "Inti Los Lagos", categoria: "Pre Infantil B", implemento: "ML", hora: "16:40" },
+      { n: 135, nombre: "Martina Rivera Velasquez", club: "Futrono", categoria: "Pre Infantil B", implemento: "ML", hora: "16:40" },
+      { n: 136, nombre: "Javiera Manriquez", club: "Alma Osorno", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 137, nombre: "Antonella Cortez Hernandez", club: "GRD Fresia", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 138, nombre: "Montserrat Anahi Arias Zevallos", club: "Gimnastico Paillaco", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 139, nombre: "Antonella Villar", club: "Alma Osorno", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 140, nombre: "Elisa Mariana Palma Grob", club: "Elite Los Rios", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 141, nombre: "Millaray Aravena Hernandez", club: "Gimnastico Paillaco", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 142, nombre: "Isidora Mellado Rojas", club: "ARA", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 143, nombre: "Florencia Munoz", club: "Ritmica Espanola Valdivia", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 144, nombre: "Antonia Paz Obreque Bachsmann", club: "ARA", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 145, nombre: "Leonor Cifuentes", club: "Alma Osorno", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 146, nombre: "Simona Eliana Riquelme Angulo", club: "Elite Los Rios", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 147, nombre: "Jasmin Martinez", club: "ARA", categoria: "Infantil C", implemento: "ML", hora: "16:40" },
+      { n: 148, nombre: "Laura Hornig", club: "Instituto Aleman de Osorno", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 149, nombre: "Florencia Inostroza Silva", club: "Futrono", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 150, nombre: "Trinidad Venegas", club: "Instituto Aleman de Osorno", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 151, nombre: "Violeta Duran Gacitua", club: "Inti Los Lagos", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 152, nombre: "Sofia Springmuller", club: "Instituto Aleman de Osorno", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 153, nombre: "Ambar Ignacia Pena Yeague", club: "Gimnastico Paillaco", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 154, nombre: "Mailen Asenjo", club: "Inti Los Lagos", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 155, nombre: "Agustina Vargas", club: "Alma Osorno", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 156, nombre: "Javiera Martel", club: "Instituto Aleman de Osorno", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+      { n: 157, nombre: "Rocio Ormazabal", club: "Elite Valdivia", categoria: "Infantil Formativo", implemento: "ML", hora: "16:40" },
+
+      { type: "break", label: "18:00 Break 10 minutos - Marcacion" },
+      { type: "time", label: "18:15" },
+      { n: 158, nombre: "Sofia Alvarez", club: "Alma Osorno", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 159, nombre: "Josefa Ormazabal Andrade", club: "Elite Los Rios", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 160, nombre: "Elena Guiresse", club: "Instituto Aleman de Osorno", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 161, nombre: "Antonella Vergara", club: "Ritimica Espanola Valdivia", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 162, nombre: "Antonia Catalan", club: "Star Mafil", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 163, nombre: "Maria Javiera Negroni", club: "Alma Osorno", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 164, nombre: "Valentina Cotal Villanueva", club: "Gimnastico Paillaco", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 165, nombre: "Agustina Salinas", club: "Ritimica Espanola Valdivia", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 166, nombre: "Antonia Catalina Solis Gonzalez", club: "ARA", categoria: "Todo Competidor F", implemento: "ML", hora: "18:15" },
+      { n: 167, nombre: "Mia Hoffmann y Sofia Padilla", club: "Ritmica Espanola Valdivia", categoria: "Duo Peque", implemento: "ML", hora: "18:15" },
+      { n: 168, nombre: "Sofia Rodas e Isidoras Perez", club: "Elite Los Rios", categoria: "Duo Pre Infantil", implemento: "ML", hora: "18:15" },
+      { n: 169, nombre: "Amara Pendola y Josefa de la Parra", club: "Ritmica Espanola Valdivia", categoria: "Duo Pre Infantil", implemento: "ML", hora: "18:15" },
+      { n: 170, nombre: "Javiera Martel y Sofia Spring", club: "Instituto Aleman de Osorno", categoria: "Duo Infantil", implemento: "ML", hora: "18:15" },
+      { n: 171, nombre: "Isidora Luengo y Florencia Munoz", club: "Ritimica Espanola Valdivia", categoria: "Duo Infantil", implemento: "ML", hora: "18:15" },
+      { n: 172, nombre: "Agustina Schafer, Alba Vives, Gretta Gonzalez", club: "Gimnastico Paillaco", categoria: "Trio Mini", implemento: "ML", hora: "18:15" },
+      { n: 173, nombre: "Emma Penafiel, Juliana Vives e Isidora Nercelles", club: "Gimnastico Paillaco", categoria: "Trio Pre Infantil", implemento: "ML", hora: "18:15" },
+      { n: 174, nombre: "Florencia Caliva, Josefa Salgado y Sofia Andrades", club: "Ritmica Espanola Valdivia", categoria: "Trio Pre Infantil", implemento: "ML", hora: "18:15" }
+    ];
+
+    const tbody = document.getElementById("tbody");
+    const search = document.getElementById("search");
+    const countTotal = document.getElementById("countTotal");
+    const countDone = document.getElementById("countDone");
+    const countPending = document.getElementById("countPending");
+    const showAllBtn = document.getElementById("showAll");
+    const showPendingBtn = document.getElementById("showPending");
+    const showDoneBtn = document.getElementById("showDone");
+    const clearAllBtn = document.getElementById("clearAll");
+
+    let statusMap = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    let filterMode = "all";
+
+    const normalize = (s) => (s || "").toLowerCase();
+
+    function rowKey(item, index) {
+      return `${item.n}-${item.nombre}-${item.club}-${index}`;
+    }
+
+    function updateCounters() {
+      const competitors = rows.filter((r) => r.n);
+      const done = competitors.filter((item, idx) => statusMap[rowKey(item, rows.indexOf(item))]).length;
+      const total = competitors.length;
+      countTotal.textContent = `Total: ${total}`;
+      countDone.textContent = `Pasaron: ${done}`;
+      countPending.textContent = `Faltan: ${total - done}`;
+    }
+
+    function render() {
+      const q = normalize(search.value.trim());
+      tbody.innerHTML = "";
+
+      rows.forEach((item, index) => {
+        if (item.type === "time" || item.type === "break") {
+          const trInfo = document.createElement("tr");
+          trInfo.className = item.type === "time" ? "time-row" : "break-row";
+          const td = document.createElement("td");
+          td.colSpan = 7;
+          td.textContent = item.label;
+          trInfo.appendChild(td);
+          tbody.appendChild(trInfo);
+          return;
+        }
+
+        const key = rowKey(item, index);
+        const isDone = !!statusMap[key];
+        const hay = normalize(`${item.n} ${item.nombre} ${item.club} ${item.categoria} ${item.implemento} ${item.hora}`);
+
+        if (q && !hay.includes(q)) return;
+        if (filterMode === "pending" && isDone) return;
+        if (filterMode === "done" && !isDone) return;
+
+        const tr = document.createElement("tr");
+        tr.className = isDone ? "done" : "pending";
+
+        tr.innerHTML = `
+          <td>${item.n}</td>
+          <td>${item.nombre}</td>
+          <td>${item.club}</td>
+          <td>${item.categoria}</td>
+          <td>${item.implemento}</td>
+          <td>${item.hora}</td>
+          <td class="pass-col"><input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" /></td>
+        `;
+
+        const check = tr.querySelector("input");
+        check.addEventListener("change", (e) => {
+          statusMap[key] = e.target.checked;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
+          render();
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      updateCounters();
+    }
+
+    function setFilterMode(mode) {
+      filterMode = mode;
+      showAllBtn.dataset.active = mode === "all";
+      showPendingBtn.dataset.active = mode === "pending";
+      showDoneBtn.dataset.active = mode === "done";
+      render();
+    }
+
+    showAllBtn.addEventListener("click", () => {
+      setFilterMode("all");
+    });
+
+    showPendingBtn.addEventListener("click", () => {
+      setFilterMode("pending");
+    });
+
+    showDoneBtn.addEventListener("click", () => {
+      setFilterMode("done");
+    });
+
+    clearAllBtn.addEventListener("click", () => {
+      if (!confirm("Se eliminaran todas las marcas guardadas. Continuar?")) return;
+      statusMap = {};
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    });
+
+    search.addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>
