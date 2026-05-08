@@ -9,17 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f3f5f7;
+      --bg: #f4f7f9;
       --card: #ffffff;
-      --text: #101828;
-      --muted: #5f6b7f;
-      --line: #d5dce8;
-      --pending: #fff5de;
-      --done: #ddf5e6;
-      --done-border: #15803d;
-      --pending-border: #b7791f;
-      --accent: #0f4ba8;
-      --accent-weak: #dbeafe;
+      --text: #142032;
+      --muted: #4f647d;
+      --line: #d4dfec;
+      --pending: #fff3dc;
+      --done: #def6e8;
+      --done-border: #1f8f56;
+      --pending-border: #c08523;
+      --accent: #0b5cab;
+      --accent-weak: #d9ecff;
     }
 
     * { box-sizing: border-box; }
@@ -27,8 +27,8 @@
       margin: 0;
       font-family: "Plus Jakarta Sans", sans-serif;
       background:
-        radial-gradient(1200px 600px at 10% -10%, #d8e6ff 0%, transparent 50%),
-        radial-gradient(900px 500px at 90% -20%, #e8f7ed 0%, transparent 45%),
+        radial-gradient(1200px 600px at 10% -10%, #dceeff 0%, transparent 50%),
+        radial-gradient(900px 500px at 90% -20%, #e8fbef 0%, transparent 45%),
         var(--bg);
       color: var(--text);
       padding: 24px;
@@ -41,39 +41,13 @@
       border: 1px solid #cfd8e7;
       border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 24px 60px rgba(8, 31, 66, 0.09);
+      box-shadow: 0 24px 60px rgba(12, 37, 71, 0.08);
     }
 
     header {
       padding: 28px;
       border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #f9fbff 0%, #f5f8ff 100%);
-    }
-
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 10px;
-    }
-
-    .logo-shell {
-      width: 62px;
-      height: 62px;
-      border-radius: 999px;
-      background: #0f172a;
-      border: 1px solid #1d2d52;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
-      overflow: hidden;
-      flex: 0 0 auto;
-    }
-
-    .logo-shell img {
-      width: 82%;
-      height: 82%;
-      object-fit: contain;
+      background: linear-gradient(180deg, #fafdff 0%, #f0f7ff 100%);
     }
 
     h1 {
@@ -96,9 +70,9 @@
       align-items: center;
       gap: 8px;
       padding: 6px 12px;
-      border: 1px solid #d8e1ef;
+      border: 1px solid #d3e1f2;
       border-radius: 999px;
-      background: #ffffffcc;
+      background: #ffffffde;
       font-size: 0.86rem;
       font-weight: 600;
     }
@@ -145,8 +119,8 @@
 
     button[data-active="true"] {
       background: var(--accent-weak);
-      border-color: #92b3e7;
-      color: #0f356f;
+      border-color: #82b4e8;
+      color: #0d457f;
     }
 
     .table-wrap {
@@ -169,8 +143,8 @@
       font-weight: 700;
     }
 
-    .mobile-time { background: #eaf0ff; color: #2f436f; }
-    .mobile-break { background: #faf7ee; color: #78601d; }
+    .mobile-time { background: #e9f1ff; color: #274675; }
+    .mobile-break { background: #fff8ea; color: #7a6020; }
 
     .mobile-card {
       border: 1px solid var(--line);
@@ -298,8 +272,6 @@
       button { padding: 9px 12px; font-size: 0.8rem; }
       .table-wrap { display: none; }
       .mobile-list { display: block; }
-      .brand-row { margin-bottom: 8px; }
-      .logo-shell { width: 50px; height: 50px; }
       .mobile-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -307,11 +279,6 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="brand-row">
-        <div class="logo-shell">
-          <img src="https://www.clubaratemuco.com/img/logo-blanco.png" alt="Logo Club Alto Rendimiento Araucania" />
-        </div>
-      </div>
       <h1>II Campeonato Club Gimnasia Ritmica Futrono</h1>
       <div class="meta">
         <span class="stat">Sabado 09 de Mayo</span>
