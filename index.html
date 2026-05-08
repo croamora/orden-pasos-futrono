@@ -85,6 +85,21 @@
       align-items: center;
     }
 
+    select {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(25, 88, 209, 0.15);
+    }
+
     input[type="search"] {
       width: 360px;
       max-width: 100%;
@@ -535,6 +550,9 @@
       </div>
       <div class="controls">
         <input id="search" type="search" placeholder="Buscar por nombre, club, categoria o implemento" />
+        <select id="clubFilter">
+          <option value="">Todos los clubes</option>
+        </select>
         <button id="showAll" data-active="true">Mostrar todo</button>
         <button id="showPending" data-active="false">Solo faltan</button>
         <button id="showDone" data-active="false">Solo pasaron</button>
@@ -816,6 +834,7 @@
     const countTotal = document.getElementById("countTotal");
     const countDone = document.getElementById("countDone");
     const countPending = document.getElementById("countPending");
+    const clubFilter = document.getElementById("clubFilter");
     const showAllBtn = document.getElementById("showAll");
     const showPendingBtn = document.getElementById("showPending");
     const showDoneBtn = document.getElementById("showDone");
@@ -830,6 +849,16 @@
       return `${item.n}-${item.nombre}-${item.club}-${index}`;
     }
 
+    function populateClubFilter() {
+      const clubs = [...new Set(rows.filter((r) => r.n).map((r) => r.club))].sort((a, b) => a.localeCompare(b, "es"));
+      clubs.forEach((club) => {
+        const option = document.createElement("option");
+        option.value = club;
+        option.textContent = club;
+        clubFilter.appendChild(option);
+      });
+    }
+
     function updateCounters() {
       const competitors = rows.filter((r) => r.n);
       const done = competitors.filter((item, idx) => statusMap[rowKey(item, rows.indexOf(item))]).length;
@@ -841,6 +870,7 @@
 
     function render() {
       const q = normalize(search.value.trim());
+      const selectedClub = clubFilter.value;
       tbody.innerHTML = "";
       mobileList.innerHTML = "";
 
@@ -866,6 +896,7 @@
         const hay = normalize(`${item.n} ${item.nombre} ${item.club} ${item.categoria} ${item.implemento} ${item.hora} ${item.horaPrevista || ""}`);
 
         if (q && !hay.includes(q)) return;
+        if (selectedClub && item.club !== selectedClub) return;
         if (filterMode === "pending" && isDone) return;
         if (filterMode === "done" && !isDone) return;
 
@@ -996,6 +1027,8 @@
     });
 
     search.addEventListener("input", render);
+    clubFilter.addEventListener("change", render);
+    populateClubFilter();
     render();
   </script>
 </body>
