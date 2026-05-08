@@ -179,6 +179,7 @@
 
     .obs {
       margin-top: 6px;
+      width: 100%;
     }
 
     .obs summary {
@@ -187,6 +188,36 @@
       color: #355277;
       font-weight: 600;
       user-select: none;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .obs summary::-webkit-details-marker { display: none; }
+
+    .obs summary::after {
+      content: "▸";
+      font-size: 0.86rem;
+      color: #355277;
+      transition: transform 140ms ease;
+    }
+
+    .obs[open] summary::after {
+      transform: rotate(90deg);
+    }
+
+    .obs.has-note summary::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #0b5cab;
+      display: inline-block;
+      margin-right: 6px;
+      box-shadow: 0 0 0 2px #d9ecff;
     }
 
     .obs textarea {
@@ -457,6 +488,14 @@
     body.mode-v3 .mobile-check {
       font-size: 0.74rem;
       gap: 5px;
+    }
+
+    body.mode-v3 .obs {
+      margin-top: 8px;
+    }
+
+    body.mode-v3 .obs textarea {
+      min-height: 54px;
     }
 
     body.mode-v3 input[type="checkbox"] {
@@ -855,11 +894,14 @@
           render();
         });
 
+        const obsDesktopDetails = tr.querySelector("details.obs");
         const obsDesktop = tr.querySelector("textarea");
         obsDesktop.value = obsMap[key] || "";
+        obsDesktopDetails.classList.toggle("has-note", !!(obsMap[key] || "").trim());
         obsDesktop.addEventListener("input", (e) => {
           obsMap[key] = e.target.value;
           localStorage.setItem(OBS_STORAGE_KEY, JSON.stringify(obsMap));
+          obsDesktopDetails.classList.toggle("has-note", !!e.target.value.trim());
         });
 
         tbody.appendChild(tr);
@@ -874,16 +916,16 @@
                 <span class="mobile-num">#${item.n}</span>
                 <div class="mobile-name">${item.nombre}</div>
                 <div class="compact-prev">Previsto ${item.horaPrevista || item.hora}</div>
-                <details class="obs">
-                  <summary>Observacion</summary>
-                  <textarea placeholder="Escribe una observacion..."></textarea>
-                </details>
               </div>
               <label class="mobile-check">
                 <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
                 Paso
               </label>
             </div>
+            <details class="obs">
+              <summary>Observacion</summary>
+              <textarea placeholder="Escribe una observacion..."></textarea>
+            </details>
           `;
         } else {
           mobileCard.innerHTML = `
@@ -891,10 +933,6 @@
               <div>
                 <span class="mobile-num">#${item.n}</span>
                 <div class="mobile-name">${item.nombre}</div>
-                <details class="obs">
-                  <summary>Observacion</summary>
-                  <textarea placeholder="Escribe una observacion..."></textarea>
-                </details>
               </div>
               <label class="mobile-check">
                 <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
@@ -907,6 +945,10 @@
               <div><strong>Implemento:</strong> ${item.implemento}</div>
               <div><strong>Previsto:</strong> ${item.horaPrevista || item.hora}</div>
             </div>
+            <details class="obs">
+              <summary>Observacion</summary>
+              <textarea placeholder="Escribe una observacion..."></textarea>
+            </details>
           `;
         }
 
@@ -917,11 +959,14 @@
           render();
         });
 
+        const obsMobileDetails = mobileCard.querySelector("details.obs");
         const obsMobile = mobileCard.querySelector("textarea");
         obsMobile.value = obsMap[key] || "";
+        obsMobileDetails.classList.toggle("has-note", !!(obsMap[key] || "").trim());
         obsMobile.addEventListener("input", (e) => {
           obsMap[key] = e.target.value;
           localStorage.setItem(OBS_STORAGE_KEY, JSON.stringify(obsMap));
+          obsMobileDetails.classList.toggle("has-note", !!e.target.value.trim());
         });
 
         mobileList.appendChild(mobileCard);
