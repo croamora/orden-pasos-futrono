@@ -76,14 +76,6 @@
       object-fit: contain;
     }
 
-    .brand-copy {
-      font-size: 0.82rem;
-      color: #5f6b7f;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
     h1 {
       margin: 0 0 8px;
       font-family: "Sora", sans-serif;
@@ -319,7 +311,6 @@
         <div class="logo-shell">
           <img src="https://www.clubaratemuco.com/img/logo-blanco.png" alt="Logo Club Alto Rendimiento Araucania" />
         </div>
-        <div class="brand-copy">Club Alto Rendimiento Araucania</div>
       </div>
       <h1>II Campeonato Club Gimnasia Ritmica Futrono</h1>
       <div class="meta">
@@ -335,7 +326,6 @@
         <button id="showDone" data-active="false">Solo pasaron</button>
         <button id="clearAll">Limpiar marcas</button>
       </div>
-      <div class="small">La persistencia se guarda automaticamente en este navegador (localStorage).</div>
     </header>
 
     <div class="table-wrap">
@@ -348,6 +338,7 @@
             <th>Categoria</th>
             <th>Implemento</th>
             <th>Horario</th>
+            <th>Previsto</th>
             <th class="pass-col">Paso</th>
           </tr>
         </thead>
@@ -359,6 +350,55 @@
 
   <script>
     const STORAGE_KEY = "futrono-campeonato-check-v1";
+
+    function timeToMinutes(hhmm) {
+      const [h, m] = hhmm.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(totalMinutes) {
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function assignEstimatedTimes(items) {
+      const sectionEnds = {
+        "9:20": "11:30",
+        "11:45": "13:30",
+        "14:45": "16:30",
+        "16:40": "18:00",
+        "18:15": "19:15"
+      };
+
+      const sections = {};
+      items.forEach((item, idx) => {
+        if (!item.n) return;
+        if (!sections[item.hora]) sections[item.hora] = [];
+        sections[item.hora].push(idx);
+      });
+
+      Object.keys(sections).forEach((start) => {
+        const indexes = sections[start];
+        const end = sectionEnds[start];
+
+        if (!end) {
+          indexes.forEach((rowIndex, i) => {
+            items[rowIndex].horaPrevista = minutesToTime(timeToMinutes(start) + i * 3);
+          });
+          return;
+        }
+
+        const startMin = timeToMinutes(start);
+        const endMin = timeToMinutes(end);
+        const step = (endMin - startMin) / indexes.length;
+
+        indexes.forEach((rowIndex, i) => {
+          const minuteMark = Math.round(startMin + i * step);
+          items[rowIndex].horaPrevista = minutesToTime(minuteMark);
+        });
+      });
+    }
 
     const rows = [
       { type: "time", label: "9:20" },
@@ -550,6 +590,8 @@
       { n: 174, nombre: "Florencia Caliva, Josefa Salgado y Sofia Andrades", club: "Ritmica Espanola Valdivia", categoria: "Trio Pre Infantil", implemento: "ML", hora: "18:15" }
     ];
 
+    assignEstimatedTimes(rows);
+
     const tbody = document.getElementById("tbody");
     const mobileList = document.getElementById("mobileList");
     const search = document.getElementById("search");
@@ -589,7 +631,7 @@
           const trInfo = document.createElement("tr");
           trInfo.className = item.type === "time" ? "time-row" : "break-row";
           const td = document.createElement("td");
-          td.colSpan = 7;
+          td.colSpan = 8;
           td.textContent = item.label;
           trInfo.appendChild(td);
           tbody.appendChild(trInfo);
@@ -603,7 +645,7 @@
 
         const key = rowKey(item, index);
         const isDone = !!statusMap[key];
-        const hay = normalize(`${item.n} ${item.nombre} ${item.club} ${item.categoria} ${item.implemento} ${item.hora}`);
+        const hay = normalize(`${item.n} ${item.nombre} ${item.club} ${item.categoria} ${item.implemento} ${item.hora} ${item.horaPrevista || ""}`);
 
         if (q && !hay.includes(q)) return;
         if (filterMode === "pending" && isDone) return;
@@ -619,6 +661,7 @@
           <td>${item.categoria}</td>
           <td>${item.implemento}</td>
           <td>${item.hora}</td>
+          <td>${item.horaPrevista || item.hora}</td>
           <td class="pass-col"><input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" /></td>
         `;
 
@@ -649,6 +692,7 @@
             <div><strong>Categoria:</strong> ${item.categoria}</div>
             <div><strong>Implemento:</strong> ${item.implemento}</div>
             <div><strong>Horario:</strong> ${item.hora}</div>
+            <div><strong>Previsto:</strong> ${item.horaPrevista || item.hora}</div>
           </div>
         `;
 
