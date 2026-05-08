@@ -168,7 +168,38 @@
     .mobile-name {
       font-weight: 700;
       line-height: 1.3;
-      font-size: 0.95rem;
+      font-size: 1.02rem;
+    }
+
+    .name-cell {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .obs {
+      margin-top: 6px;
+    }
+
+    .obs summary {
+      cursor: pointer;
+      font-size: 0.76rem;
+      color: #355277;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    .obs textarea {
+      margin-top: 6px;
+      width: 100%;
+      min-height: 58px;
+      border: 1px solid #cfdbea;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 0.85rem;
+      resize: vertical;
+      background: #fff;
     }
 
     .mobile-num {
@@ -410,7 +441,7 @@
     }
 
     body.mode-v3 .mobile-name {
-      font-size: 0.86rem;
+      font-size: 0.93rem;
       line-height: 1.2;
     }
 
@@ -468,7 +499,6 @@
         <button id="showAll" data-active="true">Mostrar todo</button>
         <button id="showPending" data-active="false">Solo faltan</button>
         <button id="showDone" data-active="false">Solo pasaron</button>
-        <button id="clearAll">Limpiar marcas</button>
       </div>
     </header>
 
@@ -481,7 +511,6 @@
             <th>Club</th>
             <th>Categoria</th>
             <th>Implemento</th>
-            <th>Horario</th>
             <th>Previsto</th>
             <th class="pass-col">Paso</th>
           </tr>
@@ -494,6 +523,7 @@
 
   <script>
     const STORAGE_KEY = "futrono-campeonato-check-v1";
+    const OBS_STORAGE_KEY = "futrono-campeonato-obs-v1";
     const mode = new URLSearchParams(window.location.search).get("mode");
     const isV2Mode = mode === "v2";
     const isV3Mode = mode === "v3";
@@ -750,9 +780,9 @@
     const showAllBtn = document.getElementById("showAll");
     const showPendingBtn = document.getElementById("showPending");
     const showDoneBtn = document.getElementById("showDone");
-    const clearAllBtn = document.getElementById("clearAll");
 
     let statusMap = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    let obsMap = JSON.parse(localStorage.getItem(OBS_STORAGE_KEY) || "{}");
     let filterMode = "all";
 
     const normalize = (s) => (s || "").toLowerCase();
@@ -780,7 +810,7 @@
           const trInfo = document.createElement("tr");
           trInfo.className = item.type === "time" ? "time-row" : "break-row";
           const td = document.createElement("td");
-          td.colSpan = 8;
+          td.colSpan = 7;
           td.textContent = item.label;
           trInfo.appendChild(td);
           tbody.appendChild(trInfo);
@@ -805,11 +835,15 @@
 
         tr.innerHTML = `
           <td>${item.n}</td>
-          <td>${item.nombre}</td>
+          <td class="name-cell">${item.nombre}
+            <details class="obs">
+              <summary>Observacion</summary>
+              <textarea placeholder="Escribe una observacion..."></textarea>
+            </details>
+          </td>
           <td>${item.club}</td>
           <td>${item.categoria}</td>
           <td>${item.implemento}</td>
-          <td>${item.hora}</td>
           <td>${item.horaPrevista || item.hora}</td>
           <td class="pass-col"><input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" /></td>
         `;
@@ -819,6 +853,13 @@
           statusMap[key] = e.target.checked;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
           render();
+        });
+
+        const obsDesktop = tr.querySelector("textarea");
+        obsDesktop.value = obsMap[key] || "";
+        obsDesktop.addEventListener("input", (e) => {
+          obsMap[key] = e.target.value;
+          localStorage.setItem(OBS_STORAGE_KEY, JSON.stringify(obsMap));
         });
 
         tbody.appendChild(tr);
@@ -833,6 +874,10 @@
                 <span class="mobile-num">#${item.n}</span>
                 <div class="mobile-name">${item.nombre}</div>
                 <div class="compact-prev">Previsto ${item.horaPrevista || item.hora}</div>
+                <details class="obs">
+                  <summary>Observacion</summary>
+                  <textarea placeholder="Escribe una observacion..."></textarea>
+                </details>
               </div>
               <label class="mobile-check">
                 <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
@@ -846,6 +891,10 @@
               <div>
                 <span class="mobile-num">#${item.n}</span>
                 <div class="mobile-name">${item.nombre}</div>
+                <details class="obs">
+                  <summary>Observacion</summary>
+                  <textarea placeholder="Escribe una observacion..."></textarea>
+                </details>
               </div>
               <label class="mobile-check">
                 <input type="checkbox" ${isDone ? "checked" : ""} aria-label="Marcar ${item.nombre}" />
@@ -856,7 +905,6 @@
               <div><strong>Club:</strong> ${item.club}</div>
               <div><strong>Categoria:</strong> ${item.categoria}</div>
               <div><strong>Implemento:</strong> ${item.implemento}</div>
-              <div><strong>Horario:</strong> ${item.hora}</div>
               <div><strong>Previsto:</strong> ${item.horaPrevista || item.hora}</div>
             </div>
           `;
@@ -867,6 +915,13 @@
           statusMap[key] = e.target.checked;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
           render();
+        });
+
+        const obsMobile = mobileCard.querySelector("textarea");
+        obsMobile.value = obsMap[key] || "";
+        obsMobile.addEventListener("input", (e) => {
+          obsMap[key] = e.target.value;
+          localStorage.setItem(OBS_STORAGE_KEY, JSON.stringify(obsMap));
         });
 
         mobileList.appendChild(mobileCard);
@@ -893,13 +948,6 @@
 
     showDoneBtn.addEventListener("click", () => {
       setFilterMode("done");
-    });
-
-    clearAllBtn.addEventListener("click", () => {
-      if (!confirm("Se eliminaran todas las marcas guardadas. Continuar?")) return;
-      statusMap = {};
-      localStorage.removeItem(STORAGE_KEY);
-      render();
     });
 
     search.addEventListener("input", render);
